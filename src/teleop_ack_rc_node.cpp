@@ -87,10 +87,7 @@ void TeleopAckRcNode::timer_callback()
                     };
 
                     /* --- Apply Specific Measured Hardware Limits --- */
-                    /* Steering Limits: 1044 to 1996 */
                     double norm_steer = apply_guardbands(p.steer, 1044, 1996);
-                    
-                    /* Throttle Limits: 1016 to 1920 */
                     double norm_throttle = apply_guardbands(p.throttle, 1016, 1920);
 
                     /* 1. Publish Ackermann Drive */
@@ -100,12 +97,22 @@ void TeleopAckRcNode::timer_callback()
                     ack_msg.speed = norm_throttle * max_speed_;
                     ack_pub_->publish(ack_msg);
 
-                    /* 2. Publish Joy message */
+                    /* 2. Publish Joy message (The Spoof) */
                     auto joy_msg = sensor_msgs::msg::Joy();
                     joy_msg.header.stamp = this->now();
                     joy_msg.axes = {(float)norm_steer, (float)norm_throttle};
-                    /* Teleop switch active check */
-                    joy_msg.buttons.push_back((p.teleop > 1500) ? 1 : 0);
+
+                    /* Direct Button Mapping for DriveModeSwitch compatibility.
+                       We assign 10 buttons (initialized to 0) to ensure index 8 exists.
+                    */
+                    joy_msg.buttons.assign(10, 0); 
+                    
+                    /* Switch State -> Button State:
+                       If Switch is High (>1500), Button 8 is Pressed (1).
+                       If Switch is Low (<1500), Button 8 is Released (0).
+                    */
+                    joy_msg.buttons[8] = (p.teleop > 1500) ? 1 : 0; 
+
                     joy_pub_->publish(joy_msg);
                 }
             } catch (...) {
