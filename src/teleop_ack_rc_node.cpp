@@ -111,7 +111,10 @@ void TeleopAckRcNode::timer_callback()
                        If Switch is High (>1500), Button 8 is Pressed (1).
                        If Switch is Low (<1500), Button 8 is Released (0).
                     */
-                    joy_msg.buttons[8] = (p.teleop > 1500) ? 1 : 0; 
+                    int button_state = (p.teleop > 1500) ? 1 : 0;
+
+                    /* Assign that state to all 10 buttons in the vector */
+                    joy_msg.buttons.assign(10, button_state); 
 
                     joy_pub_->publish(joy_msg);
                 }
